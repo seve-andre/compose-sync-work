@@ -3,6 +3,7 @@ package com.mitch.syncwork.data.sync
 import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
+import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
@@ -12,6 +13,7 @@ import androidx.work.WorkerParameters
 import com.mitch.syncwork.data.auth.UserPrefsDataSource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -24,12 +26,21 @@ class SyncManager(
 
     override suspend fun doWork(): Result {
         return try {
-            Log.d("SyncManager", "Performing sync")
-            delay(5.seconds)
-            Log.d("SyncManager", "Sync complete")
-            val syncRate = userPrefsDataSource.data.first().syncRate
-            startSync(applicationContext, delay = syncRate.duration)
-            Result.success()
+            val syncData = userPrefsDataSource.data
+                .map { SyncData(isLoggedIn = it.isLoggedIn, syncRate = it.syncRate) }
+                .first()
+            if (syncData.isLoggedIn) {
+                Log.d("SyncManager", "Performing sync")
+                delay(5.seconds)
+                Log.d("SyncManager", "Sync complete")
+                startSync(applicationContext, delay = syncData.syncRate.duration)
+                Result.success()
+            } else {
+                val outputData = Data.Builder()
+                    .putString("error_message", "User must be logged in to perform sync.")
+                    .build()
+                Result.failure(outputData)
+            }
         } catch (e: Exception) {
             Log.d("SyncManager", "Sync failed with $e")
             Result.failure()
@@ -43,6 +54,11 @@ class SyncManager(
             WorkManager.getInstance(context).apply {
                 enqueue(buildRequest(delay = delay))
             }
+        }
+
+        fun syncNow(context: Context) {
+            stopSync(context)
+            startSync(context)
         }
 
         fun stopSync(context: Context) {

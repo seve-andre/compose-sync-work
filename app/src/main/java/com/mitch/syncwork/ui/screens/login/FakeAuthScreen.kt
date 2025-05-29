@@ -19,12 +19,14 @@ fun FakeAuthRoute(
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onSyncRateChange: (SyncRate) -> Unit,
+    onSyncNow: () -> Unit,
     selectedSyncRate: SyncRate
 ) {
     FakeAuthScreen(
         onLogin = onLogin,
         onLogout = onLogout,
         onSyncRateChange = onSyncRateChange,
+        onSyncNow = onSyncNow,
         selectedSyncRate = selectedSyncRate
     )
 }
@@ -34,6 +36,7 @@ private fun FakeAuthScreen(
     onLogin: () -> Unit,
     onLogout: () -> Unit,
     onSyncRateChange: (SyncRate) -> Unit,
+    onSyncNow: () -> Unit,
     selectedSyncRate: SyncRate
 ) {
     var currentDialog: FakeAuthScreenDialog? by remember { mutableStateOf(null) }
@@ -62,6 +65,10 @@ private fun FakeAuthScreen(
 
         Button(onClick = { currentDialog = FakeAuthScreenDialog.SyncRate }) {
             Text("Change sync rate")
+        }
+
+        Button(onClick = onSyncNow) {
+            Text("Sync now")
         }
     }
 }

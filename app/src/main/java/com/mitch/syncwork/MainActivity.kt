@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.mitch.syncwork.data.auth.SyncRate
+import com.mitch.syncwork.data.sync.SyncManager
 import com.mitch.syncwork.ui.screens.login.FakeAuthRoute
 import com.mitch.syncwork.ui.theme.SyncWorkTheme
 import kotlinx.coroutines.flow.collectLatest
@@ -51,6 +52,9 @@ class MainActivity : ComponentActivity() {
                             scope.launch {
                                 dependenciesProvider.userPrefsDataSource.saveSyncRate(newSyncRate)
                             }
+                        },
+                        onSyncNow = {
+                            SyncManager.syncNow(applicationContext)
                         },
                         selectedSyncRate = syncRate
                     )

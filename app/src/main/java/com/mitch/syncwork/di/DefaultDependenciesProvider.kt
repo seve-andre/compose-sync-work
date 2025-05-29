@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.work.WorkManager
 import com.mitch.syncwork.data.auth.AuthRepository
 import com.mitch.syncwork.data.auth.UserPrefsDataSource
 
@@ -16,8 +15,5 @@ class DefaultDependenciesProvider(private val context: Context) : DependenciesPr
     }
     override val authRepository: AuthRepository by lazy {
         AuthRepository(userPrefsDataSource = userPrefsDataSource)
-    }
-    override val workManager: WorkManager by lazy {
-        WorkManager.getInstance(context)
     }
 }
