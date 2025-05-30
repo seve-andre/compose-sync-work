@@ -10,6 +10,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.mitch.syncwork.data.auth.UserPrefsDataSource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -30,10 +31,20 @@ class SyncManager(
                 .map { SyncData(isLoggedIn = it.isLoggedIn, syncRate = it.syncRate) }
                 .first()
             if (syncData.isLoggedIn) {
+                val progressZero = workDataOf(Progress to 0)
+                val progressQuarter = workDataOf(Progress to 25)
+                val progressHalf = workDataOf(Progress to 50)
+                val progressDone = workDataOf(Progress to 100)
                 Log.d("SyncManager", "Performing sync")
-                delay(5.seconds)
+                setProgress(progressZero)
+                delay(1.seconds)
+                setProgress(progressQuarter)
+                delay(1.seconds)
+                setProgress(progressHalf)
+                delay(2.seconds)
+                setProgress(progressDone)
                 Log.d("SyncManager", "Sync complete")
-                startSync(applicationContext, delay = syncData.syncRate.duration)
+                scheduleSync(applicationContext, delay = syncData.syncRate.duration)
                 Result.success()
             } else {
                 val outputData = Data.Builder()
@@ -48,24 +59,16 @@ class SyncManager(
     }
 
     companion object {
+        const val Progress = "Progress"
         const val WorkTag = "sync_manager_tag"
 
-        fun startSync(context: Context, delay: Duration = Duration.ZERO) {
+        private fun scheduleSync(context: Context, delay: Duration) {
             WorkManager.getInstance(context).apply {
                 enqueue(buildRequest(delay = delay))
             }
         }
 
-        fun syncNow(context: Context) {
-            stopSync(context)
-            startSync(context)
-        }
-
-        fun stopSync(context: Context) {
-            WorkManager.getInstance(context).cancelAllWorkByTag(WorkTag)
-        }
-
-        private fun buildRequest(delay: Duration = Duration.ZERO): OneTimeWorkRequest {
+        private fun buildRequest(delay: Duration): OneTimeWorkRequest {
             return OneTimeWorkRequestBuilder<SyncManager>()
                 .setInitialDelay(duration = delay.toJavaDuration())
                 .addTag(WorkTag)
